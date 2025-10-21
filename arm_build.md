@@ -137,3 +137,88 @@ export GLSLC=$(command -v glslc)
   -DGGML_SYSTEM_ARCH=ARM -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DGGML_SSE42=OFF -DGGML_F16C=OFF -DGGML_FMA=OFF -DGGML_BMI2=OFF -DGGML_AVX=OFF -DGGML_AVX2=OFF -DGGML_CPU_KLEIDIAI=ON -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)"
 
+---
+
+## Vulkan only
+export VULKAN_SDK=/opt/vulkansdk/1.4.328.1/x86_64
+export PATH="$VULKAN_SDK/bin:$PATH"
+glslc --version
+export GLSLC=$(command -v glslc)
+/opt/cmake-3.27.9/bin/cmake -S . -B build \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-yocto.cmake \
+  -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-gcc \
+  -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-g++ \
+  -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-<replace-SoC-vendor-here>-linux \
+  -DGGML_OPENMP=ON \
+  -DCMAKE_EXE_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
+  -DCMAKE_SHARED_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
+  -DGGML_VULKAN=ON \
+  -DVulkan_INCLUDE_DIR="$VULKAN_SDK/include" \
+  -DVulkan_LIBRARY=/home/builder/poky-sdk/sysroots/cortexa55-<replace-SoC-vendor-here>-linux/usr/lib/libvulkan.so \
+  -DVulkan_GLSLC_EXECUTABLE=$GLSLC \
+  -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
+
+## CPU only
+/opt/cmake-3.27.9/bin/cmake -S . -B build \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-yocto.cmake \
+  -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-gcc \
+  -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-g++ \
+  -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-<replace-SoC-vendor-here>-linux \
+  -DGGML_OPENMP=ON \
+  -DCMAKE_EXE_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
+  -DCMAKE_SHARED_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
+  -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
+
+## CPU only (no OpenMP)
+/opt/cmake-3.27.9/bin/cmake -S . -B build \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-yocto.cmake \
+  -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-gcc \
+  -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-g++ \
+  -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-<replace-SoC-vendor-here>-linux \
+  -DGGML_OPENMP=OFF \
+  -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
+
+## KleidiAI CPU (no OpenMP)
+/opt/cmake-3.27.9/bin/cmake -S . -B build \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-yocto.cmake \
+  -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-gcc \
+  -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-g++ \
+  -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-<replace-SoC-vendor-here>-linux \
+  -DGGML_OPENMP=OFF \
+  -DGGML_SYSTEM_ARCH=ARM -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DGGML_SSE42=OFF -DGGML_F16C=OFF -DGGML_FMA=OFF -DGGML_BMI2=OFF -DGGML_AVX=OFF -DGGML_AVX2=OFF -DGGML_CPU_KLEIDIAI=ON -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
+
+## Vulkan only (no OpenMP)
+export VULKAN_SDK=/opt/vulkansdk/1.4.328.1/x86_64
+export PATH="$VULKAN_SDK/bin:$PATH"
+glslc --version
+export GLSLC=$(command -v glslc)
+/opt/cmake-3.27.9/bin/cmake -S . -B build \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-yocto.cmake \
+  -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-gcc \
+  -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-g++ \
+  -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-<replace-SoC-vendor-here>-linux \
+  -DGGML_OPENMP=OFF \
+  -DGGML_VULKAN=ON \
+  -DVulkan_INCLUDE_DIR="$VULKAN_SDK/include" \
+  -DVulkan_LIBRARY=/home/builder/poky-sdk/sysroots/cortexa55-<replace-SoC-vendor-here>-linux/usr/lib/libvulkan.so \
+  -DVulkan_GLSLC_EXECUTABLE=$GLSLC \
+  -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
+
+## Kleidi + Vulkan (no OpenMP)
+/opt/cmake-3.27.9/bin/cmake -S . -B build \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-yocto.cmake \
+  -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-gcc \
+  -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-<replace-SoC-vendor-here>-linux/aarch64-<replace-SoC-vendor-here>-linux-g++ \
+  -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-<replace-SoC-vendor-here>-linux \
+  -DGGML_OPENMP=OFF \
+  -DGGML_VULKAN=ON \
+  -DVulkan_INCLUDE_DIR="$VULKAN_SDK/include" \
+  -DVulkan_LIBRARY=/home/builder/poky-sdk/sysroots/cortexa55-<replace-SoC-vendor-here>-linux/usr/lib/libvulkan.so \
+  -DVulkan_GLSLC_EXECUTABLE=$GLSLC \
+  -DGGML_SYSTEM_ARCH=ARM -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DGGML_SSE42=OFF -DGGML_F16C=OFF -DGGML_FMA=OFF -DGGML_BMI2=OFF -DGGML_AVX=OFF -DGGML_AVX2=OFF -DGGML_CPU_KLEIDIAI=ON -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
