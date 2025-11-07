@@ -31,6 +31,10 @@
 #pragma warning(disable: 4244 4267) // possible loss of data
 #endif
 
+#ifdef GGML_CUDA_NVTX
+#include <nvToolsExt.h>
+#endif
+
 static llama_context           ** g_ctx;
 static llama_model             ** g_model;
 static common_sampler          ** g_smpl;
@@ -137,7 +141,13 @@ int main(int argc, char ** argv) {
 
     // load the model and apply lora adapter, if any
     LOG_INF("%s: load the model and apply lora adapter, if any\n", __func__);
+#ifdef GGML_CUDA_NVTX
+    nvtxRangePushA("llama_model_load");
+#endif
     common_init_result llama_init = common_init_from_params(params);
+#ifdef GGML_CUDA_NVTX
+    nvtxRangePop();
+#endif
 
     model = llama_init.model.get();
     ctx = llama_init.context.get();
@@ -563,6 +573,9 @@ int main(int argc, char ** argv) {
     }
 
     while ((n_remain != 0 && !is_antiprompt) || params.interactive) {
+#ifdef GGML_CUDA_NVTX
+        nvtxRangePushA("llama_generation_loop");
+#endif
         // predict
         if (!embd.empty()) {
             // Note: (n_ctx - 4) here is to match the logic for commandline prompt handling via
@@ -668,10 +681,16 @@ int main(int argc, char ** argv) {
 
                 LOG_DBG("eval: %s\n", string_from(ctx, embd).c_str());
 
+#ifdef GGML_CUDA_NVTX
+                nvtxRangePushA("llama_decode");
+#endif
                 if (llama_decode(ctx, llama_batch_get_one(&embd[i], n_eval))) {
                     LOG_ERR("%s : failed to eval\n", __func__);
                     return 1;
                 }
+#ifdef GGML_CUDA_NVTX
+                nvtxRangePop();
+#endif
 
                 n_past += n_eval;
 
@@ -971,6 +990,9 @@ int main(int argc, char ** argv) {
             n_remain = params.n_predict;
             is_interacting = true;
         }
+#ifdef GGML_CUDA_NVTX
+        nvtxRangePop();
+#endif
     }
 
     if (!path_session.empty() && params.prompt_cache_all && !params.prompt_cache_ro) {

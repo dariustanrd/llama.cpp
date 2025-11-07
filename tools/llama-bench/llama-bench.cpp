@@ -22,6 +22,10 @@
 #include "ggml.h"
 #include "llama.h"
 
+#ifdef GGML_CUDA_NVTX
+#include <nvToolsExt.h>
+#endif
+
 #ifdef _WIN32
 #    define WIN32_LEAN_AND_MEAN
 #    ifndef NOMINMAX
@@ -1760,6 +1764,9 @@ struct sql_printer : public printer {
 };
 
 static bool test_prompt(llama_context * ctx, int n_prompt, int n_batch, int n_threads) {
+#ifdef GGML_CUDA_NVTX
+    nvtxRangePushA("test_prompt");
+#endif
     llama_set_n_threads(ctx, n_threads, n_threads);
 
     const llama_model * model   = llama_get_model(ctx);
@@ -1776,7 +1783,13 @@ static bool test_prompt(llama_context * ctx, int n_prompt, int n_batch, int n_th
         for (int i = 1; i < n_tokens; i++) {
             tokens[i] = std::rand() % n_vocab;
         }
+#ifdef GGML_CUDA_NVTX
+        nvtxRangePushA("llama_decode_prompt");
+#endif
         int res = llama_decode(ctx, llama_batch_get_one(tokens.data(), n_tokens));
+#ifdef GGML_CUDA_NVTX
+        nvtxRangePop();
+#endif
         if (res != 0) {
             fprintf(stderr, "%s: failed to decode prompt batch, res = %d\n", __func__, res);
             return false;
@@ -1785,10 +1798,16 @@ static bool test_prompt(llama_context * ctx, int n_prompt, int n_batch, int n_th
     }
 
     llama_synchronize(ctx);
+#ifdef GGML_CUDA_NVTX
+    nvtxRangePop();
+#endif
     return true;
 }
 
 static bool test_gen(llama_context * ctx, int n_gen, int n_threads) {
+#ifdef GGML_CUDA_NVTX
+    nvtxRangePushA("test_gen");
+#endif
     llama_set_n_threads(ctx, n_threads, n_threads);
 
     const llama_model * model   = llama_get_model(ctx);
@@ -1798,7 +1817,13 @@ static bool test_gen(llama_context * ctx, int n_gen, int n_threads) {
     llama_token token = llama_vocab_get_add_bos(vocab) ? llama_vocab_bos(vocab) : std::rand() % n_vocab;
 
     for (int i = 0; i < n_gen; i++) {
+#ifdef GGML_CUDA_NVTX
+        nvtxRangePushA("llama_decode_gen");
+#endif
         int res = llama_decode(ctx, llama_batch_get_one(&token, 1));
+#ifdef GGML_CUDA_NVTX
+        nvtxRangePop();
+#endif
         if (res != 0) {
             fprintf(stderr, "%s: failed to decode generation batch, res = %d\n", __func__, res);
             return false;
@@ -1806,6 +1831,9 @@ static bool test_gen(llama_context * ctx, int n_gen, int n_threads) {
         llama_synchronize(ctx);
         token = std::rand() % n_vocab;
     }
+#ifdef GGML_CUDA_NVTX
+    nvtxRangePop();
+#endif
     return true;
 }
 
@@ -1904,7 +1932,13 @@ int main(int argc, char ** argv) {
                 llama_model_free(lmodel);
             }
 
+#ifdef GGML_CUDA_NVTX
+            nvtxRangePushA("llama_model_load");
+#endif
             lmodel = llama_model_load_from_file(inst.model.c_str(), inst.to_llama_mparams());
+#ifdef GGML_CUDA_NVTX
+            nvtxRangePop();
+#endif
             if (lmodel == NULL) {
                 fprintf(stderr, "%s: error: failed to load model '%s'\n", __func__, inst.model.c_str());
                 return 1;
@@ -1971,6 +2005,11 @@ int main(int argc, char ** argv) {
         }
 
         for (int i = 0; i < params.reps; i++) {
+#ifdef GGML_CUDA_NVTX
+            char bench_name[128];
+            snprintf(bench_name, sizeof(bench_name), "benchmark_%d_rep_%d", params_idx, i + 1);
+            nvtxRangePushA(bench_name);
+#endif
             llama_memory_clear(llama_get_memory(ctx), false);
 
             if (t.n_depth > 0) {
@@ -2012,6 +2051,9 @@ int main(int argc, char ** argv) {
 
             uint64_t t_ns = get_time_ns() - t_start;
             t.samples_ns.push_back(t_ns);
+#ifdef GGML_CUDA_NVTX
+            nvtxRangePop();
+#endif
         }
 
         if (p) {
