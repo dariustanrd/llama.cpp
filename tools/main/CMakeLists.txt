@@ -37,3 +37,7 @@ endif()
 if(LLAMA_TOOLS_INSTALL)
     install(TARGETS ${TARGET} RUNTIME)
 endif()
+
+set(STREAMLINE_LIB_PATH "${CMAKE_SOURCE_DIR}/streamline_annotation/libstreamline_annotate.a")
+target_include_directories(llama-cli PRIVATE "${CMAKE_SOURCE_DIR}/streamline_annotation")
+target_link_libraries(llama-cli PRIVATE "${STREAMLINE_LIB_PATH}")
