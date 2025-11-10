@@ -35,6 +35,8 @@
 #include <nvToolsExt.h>
 #endif
 
+#include "streamline_annotate.h"
+
 static llama_context           ** g_ctx;
 static llama_model             ** g_model;
 static common_sampler          ** g_smpl;
@@ -96,6 +98,9 @@ int main(int argc, char ** argv) {
 
     common_init();
 
+    //Add the Annotation setup code
+    ANNOTATE_SETUP;
+
     auto & sparams = params.sampling;
 
     // save choice to use color for later
@@ -144,7 +149,12 @@ int main(int argc, char ** argv) {
 #ifdef GGML_CUDA_NVTX
     nvtxRangePushA("llama_model_load");
 #endif
-    common_init_result llama_init = common_init_from_params(params);
+    common_init_result llama_init = common_init_from_params(params); 
+    //TODO: this is quite long, as seen in nsight systems profile
+    //  try add NVTX annotation for this function. 
+    //  flash attention is called here too.
+    //  Compute is also happening, there are some small mul_mat_vec calls here.
+    //  Then finally at the end there is a long mul_mat_vec before the end, followed by memset. what is this long mul_mat_vec?
 #ifdef GGML_CUDA_NVTX
     nvtxRangePop();
 #endif
@@ -575,6 +585,7 @@ int main(int argc, char ** argv) {
     while ((n_remain != 0 && !is_antiprompt) || params.interactive) {
 #ifdef GGML_CUDA_NVTX
         nvtxRangePushA("llama_generation_loop");
+        //TODO: at the very beginning there are some mulmatvec calls, why?
 #endif
         // predict
         if (!embd.empty()) {
@@ -680,6 +691,14 @@ int main(int argc, char ** argv) {
                 }
 
                 LOG_DBG("eval: %s\n", string_from(ctx, embd).c_str());
+
+                // Add annotation marker code for Streamline
+                {
+                    char printf_buf[200];
+                    sprintf(printf_buf, "past %d, n_eval %d", n_past,n_eval );
+                    ANNOTATE_MARKER_STR(printf_buf);
+                }
+                // End of annotation marker
 
 #ifdef GGML_CUDA_NVTX
                 nvtxRangePushA("llama_decode");

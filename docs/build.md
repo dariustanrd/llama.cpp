@@ -244,6 +244,16 @@ The following compilation options are also available to tweak performance:
 | GGML_CUDA_PEER_MAX_BATCH_SIZE | Positive integer       | 128     | Maximum batch size for which to enable peer access between multiple GPUs. Peer access requires either Linux or NVLink. When using NVLink enabling peer access for larger batch sizes is potentially beneficial.                                                                                                                                                                  |
 | GGML_CUDA_FA_ALL_QUANTS       | Boolean                | false   | Compile support for all KV cache quantization type (combinations) for the FlashAttention CUDA kernels. More fine-grained control over KV cache size but compilation takes much longer.                                                                                                                                                                                           |
 
+### NVTX Profiling Flags for NVIDIA Nsight Systems
+add NVTX install args and annotations as per 101d5e51bd99320abe3cff544b8764e2eebfb316 and 7b6af97a0273ee68df7144c47416f61c72cc6511
+then 
+```bash
+cmake -B build-cuda-debug-nvtx -DGGML_CUDA=ON -DGGML_CUDA_DEBUG=ON
+cmake --build build-cuda-debug-nvtx -j"$(nproc)"
+nsys profile --sample=cpu --backtrace=dwarf --cuda-graph-trace=node ./llama-cli -m ../../models/gemma-3-270m-it-Q8_0.gguf -p "I believe the meaning of life is" -n 128 -no-cnv
+nsys profile --sample=cpu --backtrace=dwarf --cuda-graph-trace=node ./llama-bench --model ../../models/gemma-3-270m-it-Q8_0.gguf --repetitions 
+```
+
 ## MUSA
 
 This provides GPU acceleration using a Moore Threads GPU. Make sure to have the [MUSA SDK](https://developer.mthreads.com/musa/musa-sdk) installed.
@@ -503,6 +513,52 @@ load_tensors: CPU_KLEIDIAI model buffer size =  3474.00 MiB
 KleidiAI's microkernels implement optimized tensor operations using Arm CPU features such as dotprod, int8mm and SME. llama.cpp selects the most efficient kernel based on runtime CPU feature detection. However, on platforms that support SME, you must manually enable SME microkernels by setting the environment variable `GGML_KLEIDIAI_SME=1`.
 
 Depending on your build target, other higher priority backends may be enabled by default. To ensure the CPU backend is used, you must disable the higher priority backends either at compile time, e.g. -DGGML_METAL=OFF, or during run-time using the command line option `--device none`.
+
+### Arm Streamline Profiling
+As per https://learn.arm.com/learning-paths/servers-and-cloud-computing/llama_cpp_streamline/3_llama.cpp_annotation/
+
+#### Target setup
+To setup gator
+```bash
+git clone https://github.com/ARM-software/gator.git
+cd gator
+sudo apt-get install ninja-build
+./build-linux.sh
+cd build-native-gcc-rel/
+chmod +x ./gatord
+```
+To setup annotations
+```bash
+git clone https://github.com/ARM-software/gator.git
+cd gator/annotate
+cmake -S . -B build
+cmake --build build -j"$(nproc)"
+cp libstreamline_annotate.a streamline_annotate.h path/to/llama.cpp/streamline_annotation
+```
+When ready to profile:
+```bash
+sudo ./gatord -a
+```
+#### Add Annotations
+As per docs
+
+#### Build llama.cpp with Kleidi
+```bash
+cmake -B build-kleidi-debug-streamline \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DCMAKE_EXE_LINKER_FLAGS="-static -g" \
+    -DGGML_OPENMP=OFF \
+    -DCMAKE_C_FLAGS="-march=native -g" \
+    -DCMAKE_CXX_FLAGS="-march=native -g" \
+    -DGGML_CPU_KLEIDIAI=ON \
+    -DLLAMA_BUILD_TESTS=OFF \
+    -DLLAMA_BUILD_EXAMPLES=ON \
+    -DLLAMA_CURL=OFF
+cmake --build build-kleidi-debug-streamline/ -j"$(nproc)"
+```
+#### In Arm Streamline:
+- Select counters, capture settings
+- Then profile from Arm Streamline connected via SSH
 
 ## OpenCL
 

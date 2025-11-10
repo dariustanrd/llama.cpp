@@ -545,9 +545,8 @@ function(ggml_add_cpu_backend_variant_impl tag_name)
         endif()
 
         FetchContent_Declare(KleidiAI_Download
-            URL ${KLEIDIAI_DOWNLOAD_URL}
-            DOWNLOAD_EXTRACT_TIMESTAMP NEW
-            URL_HASH MD5=${KLEIDIAI_ARCHIVE_MD5})
+        URL "${KLEIDIAI_DOWNLOAD_URL}"
+        URL_HASH MD5=${KLEIDIAI_ARCHIVE_MD5})
 
         FetchContent_MakeAvailable(KleidiAI_Download)
         FetchContent_GetProperties(KleidiAI_Download
