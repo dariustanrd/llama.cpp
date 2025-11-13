@@ -36,6 +36,7 @@
 #endif
 
 #include "streamline_annotate.h"
+#include "streamline_addon.h"
 
 static llama_context           ** g_ctx;
 static llama_model             ** g_model;
@@ -149,6 +150,8 @@ int main(int argc, char ** argv) {
 #ifdef GGML_CUDA_NVTX
     nvtxRangePushA("llama_model_load");
 #endif
+    streamline_annotation_marker("llama_model_load");
+
     common_init_result llama_init = common_init_from_params(params); 
     //TODO: this is quite long, as seen in nsight systems profile
     //  try add NVTX annotation for this function. 
@@ -158,6 +161,7 @@ int main(int argc, char ** argv) {
 #ifdef GGML_CUDA_NVTX
     nvtxRangePop();
 #endif
+    streamline_annotation_marker("end of llama_model_load");
 
     model = llama_init.model.get();
     ctx = llama_init.context.get();
@@ -587,6 +591,9 @@ int main(int argc, char ** argv) {
         nvtxRangePushA("llama_generation_loop");
         //TODO: at the very beginning there are some mulmatvec calls, why?
 #endif
+
+        streamline_annotation_marker("llama_generation_loop");
+
         // predict
         if (!embd.empty()) {
             // Note: (n_ctx - 4) here is to match the logic for commandline prompt handling via
@@ -692,13 +699,7 @@ int main(int argc, char ** argv) {
 
                 LOG_DBG("eval: %s\n", string_from(ctx, embd).c_str());
 
-                // Add annotation marker code for Streamline
-                {
-                    char printf_buf[200];
-                    sprintf(printf_buf, "past %d, n_eval %d", n_past,n_eval );
-                    ANNOTATE_MARKER_STR(printf_buf);
-                }
-                // End of annotation marker
+                streamline_annotation_marker("llama_decode: past " + std::to_string(n_past) + ", n_eval " + std::to_string(n_eval));
 
 #ifdef GGML_CUDA_NVTX
                 nvtxRangePushA("llama_decode");
@@ -710,7 +711,7 @@ int main(int argc, char ** argv) {
 #ifdef GGML_CUDA_NVTX
                 nvtxRangePop();
 #endif
-
+                streamline_annotation_marker("end of llama_decode");
                 n_past += n_eval;
 
                 LOG_DBG("n_past = %d\n", n_past);
@@ -1012,6 +1013,7 @@ int main(int argc, char ** argv) {
 #ifdef GGML_CUDA_NVTX
         nvtxRangePop();
 #endif
+        streamline_annotation_marker("end of llama_generation_loop");
     }
 
     if (!path_session.empty() && params.prompt_cache_all && !params.prompt_cache_ro) {

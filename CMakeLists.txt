@@ -81,6 +81,9 @@ option(LLAMA_BUILD_TOOLS    "llama: build tools"          ${LLAMA_STANDALONE})
 option(LLAMA_BUILD_EXAMPLES "llama: build examples"       ${LLAMA_STANDALONE})
 option(LLAMA_BUILD_SERVER   "llama: build server example" ${LLAMA_STANDALONE})
 
+# Annotation profiling
+option(ARM_STREAMLINE_INSTALL "ARM Streamline: install streamline_addon library and headers" OFF)
+
 # 3rd party libs
 option(LLAMA_CURL       "llama: use libcurl to download model from an URL" ON)
 option(LLAMA_LLGUIDANCE "llama-common: include LLGuidance library for structured output in common utils" OFF)
