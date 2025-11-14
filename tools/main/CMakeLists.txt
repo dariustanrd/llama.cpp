@@ -38,6 +38,9 @@ if(LLAMA_TOOLS_INSTALL)
     install(TARGETS ${TARGET} RUNTIME)
 endif()
 
-# Add streamline_annotation subdirectory and link the library
-add_subdirectory(${CMAKE_SOURCE_DIR}/streamline_annotation streamline_annotation)
-target_link_libraries(llama-cli PRIVATE streamline_addon)
+# Add streamline_annotation subdirectory and link the library conditionally
+if (ARM_STREAMLINE_ANNOTATION)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/streamline_annotation streamline_annotation)
+    target_link_libraries(llama-cli PRIVATE streamline_addon)
+    target_compile_definitions(${TARGET} PRIVATE USE_STREAMLINE_ANNOTATIONS)
+endif()
