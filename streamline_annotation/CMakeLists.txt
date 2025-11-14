@@ -18,7 +18,7 @@ if(EXISTS "${STREAMLINE_LIB_PATH}")
 endif()
 
 # Install the library and header files
-if(ARM_STREAMLINE_INSTALL)
+if(ARM_STREAMLINE_ANNOTATION)
     install(TARGETS streamline_addon
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

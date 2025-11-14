@@ -150,7 +150,9 @@ int main(int argc, char ** argv) {
 #ifdef GGML_CUDA_NVTX
     nvtxRangePushA("llama_model_load");
 #endif
+#ifdef USE_STREAMLINE_ANNOTATIONS
     streamline_annotation_marker("llama_model_load");
+#endif
 
     common_init_result llama_init = common_init_from_params(params); 
     //TODO: this is quite long, as seen in nsight systems profile
@@ -161,7 +163,9 @@ int main(int argc, char ** argv) {
 #ifdef GGML_CUDA_NVTX
     nvtxRangePop();
 #endif
+#ifdef USE_STREAMLINE_ANNOTATIONS
     streamline_annotation_marker("end of llama_model_load");
+#endif
 
     model = llama_init.model.get();
     ctx = llama_init.context.get();
@@ -592,7 +596,9 @@ int main(int argc, char ** argv) {
         //TODO: at the very beginning there are some mulmatvec calls, why?
 #endif
 
+#ifdef USE_STREAMLINE_ANNOTATIONS
         streamline_annotation_marker("llama_generation_loop");
+#endif
 
         // predict
         if (!embd.empty()) {
@@ -699,7 +705,9 @@ int main(int argc, char ** argv) {
 
                 LOG_DBG("eval: %s\n", string_from(ctx, embd).c_str());
 
+#ifdef USE_STREAMLINE_ANNOTATIONS
                 streamline_annotation_marker("llama_decode: past " + std::to_string(n_past) + ", n_eval " + std::to_string(n_eval));
+#endif
 
 #ifdef GGML_CUDA_NVTX
                 nvtxRangePushA("llama_decode");
@@ -711,7 +719,9 @@ int main(int argc, char ** argv) {
 #ifdef GGML_CUDA_NVTX
                 nvtxRangePop();
 #endif
+#ifdef USE_STREAMLINE_ANNOTATIONS
                 streamline_annotation_marker("end of llama_decode");
+#endif
                 n_past += n_eval;
 
                 LOG_DBG("n_past = %d\n", n_past);
@@ -1013,7 +1023,9 @@ int main(int argc, char ** argv) {
 #ifdef GGML_CUDA_NVTX
         nvtxRangePop();
 #endif
+#ifdef USE_STREAMLINE_ANNOTATIONS
         streamline_annotation_marker("end of llama_generation_loop");
+#endif
     }
 
     if (!path_session.empty() && params.prompt_cache_all && !params.prompt_cache_ro) {

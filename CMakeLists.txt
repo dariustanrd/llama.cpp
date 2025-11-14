@@ -91,7 +91,10 @@ option(LLAMA_BUILD_SERVER   "llama: build server example" ${LLAMA_STANDALONE})
 option(LLAMA_TOOLS_INSTALL  "llama: install tools"        ${LLAMA_TOOLS_INSTALL_DEFAULT})
 
 # Annotation profiling
-option(ARM_STREAMLINE_INSTALL "ARM Streamline: install streamline_addon library and headers" OFF)
+option(ARM_STREAMLINE_ANNOTATION "ARM Streamline: enable streamline annotations for profiling" OFF)
+if (ARM_STREAMLINE_ANNOTATION)
+    add_compile_definitions(USE_STREAMLINE_ANNOTATIONS)
+endif()
 
 # 3rd party libs
 option(LLAMA_CURL       "llama: use libcurl to download model from an URL" ON)
