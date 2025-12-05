@@ -82,6 +82,61 @@ cmake -B build-kleidi-debug-streamline \
 cmake --build build-kleidi-debug-streamline/ -j"$(nproc)"
 ```
 
+#### For arm build (kleidi + vulkan)
+```bash
+bitbake telechips-ivi-subcore-image -c populate_sdk
+builder@conti-sym7870:~/linux-sdk/build-autolinux/build/tcc8070-sub$ echo $HOME
+/home/builder
+builder@conti-sym7870:~/linux-sdk/build-autolinux/build/tcc8070-sub$ mkdir -p "$HOME/poky-sdk"
+builder@conti-sym7870:~/linux-sdk/build-autolinux/build/tcc8070-sub$ ./tmp/deploy/sdk/poky-telechips-systemd-glibc-x86_64-telechips-ivi-subcore-image-cortexa55-toolchain-nodistro.0.sh 
+Telechips Baseline (Poky/meta-telechips/meta-core) SDK installer version nodistro.0
+===================================================================================
+Enter target directory for SDK (default: /usr/local/oecore-x86_64): /home/builder/poky-sdk         
+You are about to install the SDK to "/home/builder/poky-sdk". Proceed [Y/n]? y
+Extracting SDK...........................................................done
+Setting it up...done
+SDK has been successfully set up and is ready to be used.
+Each time you wish to use the SDK in a new shell session, you need to source the environment setup script e.g.
+ $ . /home/builder/poky-sdk/environment-setup-cortexa55-telechips-linux
+```
+
+cd llama.cpp
+
+
+`source /home/builder/poky-sdk/environment-setup-cortexa55-telechips-linux`
+cd /opt
+wget https://sdk.lunarg.com/sdk/download/1.4.328.1/linux/vulkansdk-linux-x86_64-1.4.328.1.tar.xz
+tar -xf vulkansdk-linux-x86_64-1.4.328.1.tar.xz
+rm vulkansdk-linux-x86_64-1.4.328.1.tar.xz
+mkdir vulkansdk
+mv 1.4.328.1/ ./vulkansdk/1.4.328.1
+apt install qt5-default libxcb-xinput0 libxcb-xinerama0
+
+export VULKAN_SDK=/opt/vulkansdk/1.4.328.1/x86_64
+export PATH="$VULKAN_SDK/bin:$PATH"
+glslc --version
+
+export GLSLC=$(command -v glslc)
+/opt/cmake-3.27.9/bin/cmake -S . -B build-kleidi-vulkan-openmp-streamline \
+    -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-yocto.cmake \
+    -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-telechips-linux/aarch64-telechips-linux-gcc \
+    -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-telechips-linux/aarch64-telechips-linux-g++ \
+    -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-telechips-linux \
+    -DGGML_OPENMP=ON \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DCMAKE_EXE_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
+    -DLLAMA_BUILD_TESTS=OFF \
+    -DLLAMA_BUILD_EXAMPLES=ON \
+    -DGGML_VULKAN=ON \
+    -DVulkan_INCLUDE_DIR="$VULKAN_SDK/include" \
+    -DVulkan_LIBRARY=/home/builder/poky-sdk/sysroots/cortexa55-telechips-linux/usr/lib/libvulkan.so \
+    -DVulkan_GLSLC_EXECUTABLE=$GLSLC \
+    -DGGML_SYSTEM_ARCH=ARM -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DGGML_SSE42=OFF -DGGML_F16C=OFF -DGGML_FMA=OFF -DGGML_BMI2=OFF -DGGML_AVX=OFF -DGGML_AVX2=OFF -DGGML_CPU_KLEIDIAI=ON -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release \
+    -DARM_STREAMLINE_ANNOTATION=ON
+cmake --build build-kleidi-vulkan-openmp-streamline/ -j"$(nproc)"
+```
+
 ### Using Arm Streamline
 
 1. Select counters and capture settings in Arm Streamline
