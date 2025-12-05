@@ -212,7 +212,7 @@ static void dequantize_row_qsi4c32ps1s0scalef16(
     }
     GGML_UNUSED(kr);
 }
-
+#if defined(__ARM_FEATURE_SME) || defined(__ARM_FEATURE_DOTPROD) || defined(__ARM_FEATURE_MATMUL_INT8)
 static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
 #if defined(__ARM_FEATURE_SME)
     {
@@ -547,6 +547,10 @@ static ggml_kleidiai_kernels gemm_gemv_kernels[] = {
 #endif
 #endif
 };
+#else
+// Fallback for when no ARM features are available - provide an empty array
+static ggml_kleidiai_kernels gemm_gemv_kernels[1] = {};
+#endif
 
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, const ggml_tensor * tensor) {
     ggml_kleidiai_kernels * kernel = nullptr;
