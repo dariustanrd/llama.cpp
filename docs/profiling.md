@@ -154,27 +154,6 @@ export GLSLC=$(command -v glslc)
 cmake --build build-kleidi-vulkan-openmp-streamline/ -j"$(nproc)"
 ```
 
-instead try
-```bash
-/opt/cmake-3.27.9/bin/cmake -S . -B build-kleidi-vulkan-openmp-streamline-3 \
-    -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-yocto.cmake \
-    -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-telechips-linux/aarch64-telechips-linux-gcc \
-    -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-telechips-linux/aarch64-telechips-linux-g++ \
-    -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-telechips-linux \
-    -DGGML_OPENMP=ON \
-    -DBUILD_SHARED_LIBS=OFF \
-    -DCMAKE_EXE_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
-    -DCMAKE_SHARED_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
-    -DLLAMA_BUILD_TESTS=OFF \
-    -DLLAMA_BUILD_EXAMPLES=ON \
-    -DGGML_VULKAN=ON \
-    -DVulkan_INCLUDE_DIR="$VULKAN_SDK/include" \
-    -DVulkan_LIBRARY=/home/builder/poky-sdk/sysroots/cortexa55-telechips-linux/usr/lib/libvulkan.so \
-    -DVulkan_GLSLC_EXECUTABLE=$GLSLC \
-    -DGGML_SYSTEM_ARCH=ARM -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DGGML_SSE42=OFF -DGGML_F16C=OFF -DGGML_FMA=OFF -DGGML_BMI2=OFF -DGGML_AVX=OFF -DGGML_AVX2=OFF -DGGML_CPU_KLEIDIAI=ON -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release \
-    -DARM_STREAMLINE_ANNOTATION=ON
-```
-
 ### Using Arm Streamline
 
 1. Select counters and capture settings in Arm Streamline
