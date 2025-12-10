@@ -35,8 +35,10 @@
 #include <nvToolsExt.h>
 #endif
 
+#ifdef USE_STREAMLINE_ANNOTATIONS
 #include "streamline_annotate.h"
 #include "streamline_addon.h"
+#endif
 
 static llama_context           ** g_ctx;
 static llama_model             ** g_model;
@@ -99,9 +101,11 @@ int main(int argc, char ** argv) {
 
     common_init();
 
+    #ifdef USE_STREAMLINE_ANNOTATIONS
     //Add the Annotation setup code
     ANNOTATE_SETUP;
-
+    #endif
+    
     auto & sparams = params.sampling;
 
     // save choice to use color for later
