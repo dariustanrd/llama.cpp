@@ -50,12 +50,29 @@ chmod +x ./gatord
 
 #### Setup annotations
 
+##### For X86:
+
 ```bash
-git clone https://github.com/ARM-software/gator.git
 cd gator/annotate
+
+source /home/builder/linux-sdk/build-autolinux/buildtools/4.0/environment-setup-x86_64-pokysdk-linux
+
+
 cmake -S . -B build
 cmake --build build -j"$(nproc)"
 cp libstreamline_annotate.a streamline_annotate.h path/to/llama.cpp/streamline_annotation
+```
+
+##### For Arm:
+
+```bash
+source /home/builder/linux-sdk/build-autolinux/buildtools/4.0/environment-setup-x86_64-pokysdk-linux
+cmake -S . -B build-aarch64 \
+    -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-telechips-linux/aarch64-telechips-linux-gcc \
+    -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-telechips-linux/aarch64-telechips-linux-g++ \
+    -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-telechips-linux \
+cmake --build build-aarch64 -j"$(nproc)
+cp build-aarch64/libstreamline_annotate.a /workspace/llama.cpp/streamline_annotation/
 ```
 
 #### Start gator daemon
@@ -135,6 +152,27 @@ export GLSLC=$(command -v glslc)
     -DGGML_SYSTEM_ARCH=ARM -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DGGML_SSE42=OFF -DGGML_F16C=OFF -DGGML_FMA=OFF -DGGML_BMI2=OFF -DGGML_AVX=OFF -DGGML_AVX2=OFF -DGGML_CPU_KLEIDIAI=ON -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release \
     -DARM_STREAMLINE_ANNOTATION=ON
 cmake --build build-kleidi-vulkan-openmp-streamline/ -j"$(nproc)"
+```
+
+instead try
+```bash
+/opt/cmake-3.27.9/bin/cmake -S . -B build-kleidi-vulkan-openmp-streamline-3 \
+    -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/aarch64-linux-yocto.cmake \
+    -DCMAKE_C_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-telechips-linux/aarch64-telechips-linux-gcc \
+    -DCMAKE_CXX_COMPILER=/home/builder/poky-sdk/sysroots/x86_64-oesdk-linux/usr/bin/aarch64-telechips-linux/aarch64-telechips-linux-g++ \
+    -DCMAKE_SYSROOT=/home/builder/poky-sdk/sysroots/cortexa55-telechips-linux \
+    -DGGML_OPENMP=ON \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DCMAKE_EXE_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fopenmp -Wl,--no-as-needed" \
+    -DLLAMA_BUILD_TESTS=OFF \
+    -DLLAMA_BUILD_EXAMPLES=ON \
+    -DGGML_VULKAN=ON \
+    -DVulkan_INCLUDE_DIR="$VULKAN_SDK/include" \
+    -DVulkan_LIBRARY=/home/builder/poky-sdk/sysroots/cortexa55-telechips-linux/usr/lib/libvulkan.so \
+    -DVulkan_GLSLC_EXECUTABLE=$GLSLC \
+    -DGGML_SYSTEM_ARCH=ARM -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a -DGGML_SSE42=OFF -DGGML_F16C=OFF -DGGML_FMA=OFF -DGGML_BMI2=OFF -DGGML_AVX=OFF -DGGML_AVX2=OFF -DGGML_CPU_KLEIDIAI=ON -DGGML_CPU_AARCH64=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release \
+    -DARM_STREAMLINE_ANNOTATION=ON
 ```
 
 ### Using Arm Streamline
