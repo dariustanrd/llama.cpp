@@ -77,10 +77,16 @@ cp build-aarch64/libstreamline_annotate.a /workspace/llama.cpp/streamline_annota
 
 #### Start gator daemon
 
-When ready to profile:
+When ready to profile (online):
 ```bash
 sudo ./gatord -a
 ```
+
+When ready to profile (offline):
+```bash
+sudo ./gatord -c configuration.xml -o log.apc
+```
+- configuration.xml is to select which counters to be profiled, see https://developer.arm.com/documentation/101816/9-7/Add-custom-counters-from-files-and-trace-events/Creating-a-configuration-xml-file?lang=en for details on how to generate the file
 
 ### Build llama.cpp with Streamline Support
 
